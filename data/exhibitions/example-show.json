@@ -1,0 +1,66 @@
+{
+  "slug": "example-show",
+  "title": "Fragments du Réel",
+  "curator": "Marie Leconte",
+  "description": "Une exploration de la couleur et de la forme à travers trois œuvres majeures.",
+  "openingDate": "2026-05-01",
+  "rooms": [
+    {
+      "id": "main-hall",
+      "artworks": [
+        {
+          "id": "artwork-01",
+          "imageUrl": "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800",
+          "position": [0, 1.8, -7.4],
+          "rotation": [0, 0, 0],
+          "dimensions": { "widthCm": 120, "heightCm": 80 },
+          "frameStyle": "black",
+          "spotPosition": [0, 3.7, -6.9],
+          "meta": {
+            "title": "Horizon Immobile",
+            "artist": "Clara Voss",
+            "year": 2024,
+            "medium": "Huile sur toile",
+            "price": 2400,
+            "description": "Une méditation sur l'espace et le silence."
+          }
+        },
+        {
+          "id": "artwork-02",
+          "imageUrl": "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=600",
+          "position": [-4.4, 1.8, -3],
+          "rotation": [0, 1.5708, 0],
+          "dimensions": { "widthCm": 60, "heightCm": 90 },
+          "frameStyle": "gold",
+          "spotPosition": [-3.9, 3.7, -3],
+          "meta": {
+            "title": "Portrait de la Brume",
+            "artist": "Idriss Kamara",
+            "year": 2023,
+            "medium": "Acrylique sur lin",
+            "price": 1800,
+            "description": "La lumière diffuse comme langage."
+          }
+        },
+        {
+          "id": "artwork-03",
+          "imageUrl": "https://images.unsplash.com/photo-1549490349-8643362247b5?w=800",
+          "position": [4.4, 1.8, 0],
+          "rotation": [0, -1.5708, 0],
+          "dimensions": { "widthCm": 80, "heightCm": 60 },
+          "frameStyle": "white",
+          "spotPosition": [3.9, 3.7, 0],
+          "meta": {
+            "title": "Territoire Flottant",
+            "artist": "Sun Li",
+            "year": 2025,
+            "medium": "Photographie numérique",
+            "price": 950,
+            "description": "Entre abstraction et paysage réel."
+          }
+        }
+      ],
+      "portals": []
+    }
+  ]
+}
