@@ -30,8 +30,8 @@ export default async function GalleryPage({ params }: GalleryPageProps) {
   }
 
   return (
-    <main className="w-full h-screen overflow-hidden" data-slug={slug}>
+    <div className="w-full" data-slug={slug}>
       <GalleryClient slug={slug} exhibition={exhibition} />
-    </main>
+    </div>
   )
 }

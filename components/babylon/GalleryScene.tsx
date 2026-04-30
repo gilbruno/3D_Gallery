@@ -125,7 +125,7 @@ export default function GalleryScene({
   }, [])
 
   return (
-    <div className="w-full h-screen bg-[#f7f7f7]">
+    <div className="w-full bg-[#f7f7f7]" style={{ flex: 1, minHeight: 0 }}>
       <BabylonCanvas
         onSceneReady={handleSceneReady}
         onRender={handleRender}
