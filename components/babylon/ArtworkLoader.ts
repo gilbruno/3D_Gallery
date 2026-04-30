@@ -3,7 +3,6 @@
  * Charge les œuvres depuis un ArtworkConfig[], crée :
  *   - Mesh plan texturé (image)
  *   - Cadre procédural 4 boîtes parentées
- *   - Cartel 3D via @babylonjs/gui
  *   - ActionManager pour interaction clic + hover
  *
  * Note : les SpotLights individuels ont été supprimés.
@@ -11,6 +10,9 @@
  * n'avaient aucun effet sur elles et projetaient des halos ovales visibles
  * sur les murs. L'éclairage ambiant global (HemisphericLight + DirectionalLight)
  * assure un rendu uniforme de la salle.
+ *
+ * Note : le cartel 3D Babylon GUI a été supprimé — remplacé par une popup
+ * HTML/React gérée via le callback onArtworkHover.
  */
 
 import type { Scene, Mesh } from '@babylonjs/core'
@@ -19,7 +21,6 @@ import type { ArtworkConfig, FrameStyle } from '@/data/exhibitions/schema'
 export interface LoadedArtwork {
   plane: Mesh
   frame: Mesh[]
-  label: Mesh
   config: ArtworkConfig
 }
 
@@ -131,91 +132,13 @@ async function buildFrame(
 }
 
 // -------------------------------------------------------------------
-// Cartel 3D (Étape 10)
-// -------------------------------------------------------------------
-async function buildLabel(
-  artwork: ArtworkConfig,
-  plane: Mesh,
-  meshWidth: number,
-  meshHeight: number,
-  scene: Scene
-): Promise<Mesh> {
-  const { MeshBuilder, Vector3, Mesh: BabMesh } = await import('@babylonjs/core')
-  const GUI = await import('@babylonjs/gui')
-
-  const labelWidth = Math.max(meshWidth, 0.5)
-  const labelHeight = 0.15
-
-  const labelPlane = MeshBuilder.CreatePlane(
-    `label-${artwork.id}`,
-    { width: labelWidth, height: labelHeight, sideOrientation: BabMesh.DOUBLESIDE },
-    scene
-  )
-
-  // Positionnement : sous l'œuvre, légèrement décalé vers l'avant
-  labelPlane.position = new Vector3(
-    plane.position.x,
-    plane.position.y - meshHeight / 2 - 0.12,
-    plane.position.z
-  )
-  labelPlane.rotation = plane.rotation.clone()
-  labelPlane.isPickable = false
-  labelPlane.billboardMode = BabMesh.BILLBOARDMODE_NONE
-  // Masqué par défaut — affiché uniquement au survol pour ne pas polluer la vue
-  labelPlane.setEnabled(false)
-
-  // Texture GUI
-  // uScale = -1 corrige l'inversion horizontale (miroir) du texte sur le plan
-  const adt = GUI.AdvancedDynamicTexture.CreateForMesh(labelPlane, 512, 128)
-  adt.uScale = -1
-
-  const bg = new GUI.Rectangle('bg')
-  bg.background = 'white'
-  bg.alpha = 0.9
-  bg.thickness = 0
-  bg.cornerRadius = 4
-  adt.addControl(bg)
-
-  const stack = new GUI.StackPanel('stack')
-  stack.isVertical = true
-  stack.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER
-  bg.addControl(stack)
-
-  const titleBlock = new GUI.TextBlock('title', artwork.meta.title)
-  titleBlock.color = '#111111'
-  titleBlock.fontSize = 28
-  titleBlock.fontWeight = 'bold'
-  titleBlock.height = '40px'
-  titleBlock.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER
-  stack.addControl(titleBlock)
-
-  const artistBlock = new GUI.TextBlock('artist', artwork.meta.artist)
-  artistBlock.color = '#333333'
-  artistBlock.fontSize = 22
-  artistBlock.height = '32px'
-  artistBlock.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER
-  stack.addControl(artistBlock)
-
-  const yearText = artwork.meta.price
-    ? `${artwork.meta.year}  ·  ${artwork.meta.price} €`
-    : `${artwork.meta.year}`
-  const yearBlock = new GUI.TextBlock('year', yearText)
-  yearBlock.color = '#555555'
-  yearBlock.fontSize = 20
-  yearBlock.height = '28px'
-  yearBlock.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER
-  stack.addControl(yearBlock)
-
-  return labelPlane
-}
-
-// -------------------------------------------------------------------
 // Export principal : loadArtworks
 // -------------------------------------------------------------------
 export async function loadArtworks(
   artworks: ArtworkConfig[],
   scene: Scene,
-  onArtworkClick?: (artwork: ArtworkConfig) => void
+  onArtworkClick?: (artwork: ArtworkConfig) => void,
+  onArtworkHover?: (artwork: ArtworkConfig | null) => void
 ): Promise<LoadedArtwork[]> {
   const {
     MeshBuilder,
@@ -269,11 +192,6 @@ export async function loadArtworks(
     const frame = await buildFrame(artwork, plane, meshWidth, meshHeight, scene)
 
     // ---------------------------------------------------------------
-    // Étape 10 : cartel 3D
-    // ---------------------------------------------------------------
-    const label = await buildLabel(artwork, plane, meshWidth, meshHeight, scene)
-
-    // ---------------------------------------------------------------
     // Étape 11 : ActionManager (clic + hover)
     // ---------------------------------------------------------------
     plane.actionManager = new ActionManager(scene)
@@ -285,25 +203,25 @@ export async function loadArtworks(
       })
     )
 
-    // Hover ON → curseur pointer + affiche cartel
+    // Hover ON → curseur pointer + popup HTML React
     plane.actionManager.registerAction(
       new ExecuteCodeAction(ActionManager.OnPointerOverTrigger, () => {
-        label.setEnabled(true)
+        onArtworkHover?.(artwork)
         const canvas = scene.getEngine().getRenderingCanvas()
         if (canvas) canvas.style.cursor = 'pointer'
       })
     )
 
-    // Hover OFF → curseur normal + masque cartel
+    // Hover OFF → curseur normal + ferme popup HTML React
     plane.actionManager.registerAction(
       new ExecuteCodeAction(ActionManager.OnPointerOutTrigger, () => {
-        label.setEnabled(false)
+        onArtworkHover?.(null)
         const canvas = scene.getEngine().getRenderingCanvas()
         if (canvas) canvas.style.cursor = 'default'
       })
     )
 
-    results.push({ plane, frame, label, config: artwork })
+    results.push({ plane, frame, config: artwork })
   }
 
   return results

@@ -25,12 +25,15 @@ interface GallerySceneProps {
   exhibition?: ExhibitionConfig
   /** Callback déclenché quand l'utilisateur clique sur une œuvre */
   onArtworkClick?: (artwork: ArtworkConfig) => void
+  /** Callback déclenché au survol d'une œuvre — null = fin du survol */
+  onArtworkHover?: (artwork: ArtworkConfig | null) => void
 }
 
 export default function GalleryScene({
   slug,
   exhibition,
   onArtworkClick,
+  onArtworkHover,
 }: GallerySceneProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
@@ -104,13 +107,17 @@ export default function GalleryScene({
         onArtworkClick?.(artwork)
       }
 
-      await loadArtworks(roomConfig.artworks, scene, handleClick)
+      const handleHover = (artwork: ArtworkConfig | null) => {
+        onArtworkHover?.(artwork)
+      }
+
+      await loadArtworks(roomConfig.artworks, scene, handleClick, handleHover)
 
       console.log(
         `[GalleryScene] ${roomConfig.artworks.length} œuvre(s) chargée(s) pour "${config.title}"`
       )
     },
-    [slug, exhibition, onArtworkClick]
+    [slug, exhibition, onArtworkClick, onArtworkHover]
   )
 
   const handleRender = useCallback((_scene: Scene) => {
