@@ -61,6 +61,28 @@ export async function setupCamera(
     if (keys['KeyD'] || keys['ArrowRight']) {
       camera.position.addInPlace(right.scale(SPEED))
     }
+
+    // --- Application de la vélocité souris avec inertie ---
+    // On applique à chaque frame, que ce soit pendant le drag ou après (inertie).
+    // Le seuil 0.00001 évite les micro-dérives infinitésimales.
+    if (Math.abs(velocityX) > 0.00001 || Math.abs(velocityY) > 0.00001) {
+      // Rotation horizontale (yaw)
+      camera.rotation.y += velocityX
+
+      // Déplacement forward/backward via drag vertical
+      if (Math.abs(velocityY) > 0.00001) {
+        const fwd = camera.getDirection(new Vector3(0, 0, 1))
+        fwd.y = 0
+        if (fwd.length() > 0.001) fwd.normalize()
+        camera.position.addInPlace(fwd.scale(-velocityY))
+      }
+
+      // Damping exponentiel : la vélocité diminue de (1 - DAMPING) à chaque frame.
+      // Après le pointerup, l'utilisateur perçoit une décélération naturelle
+      // similaire au momentum d'un scroll iOS.
+      velocityX *= DAMPING
+      velocityY *= DAMPING
+    }
   })
 
   // --- Souris : drag pour rotation + déplacement avant/arrière ---
@@ -69,6 +91,16 @@ export async function setupCamera(
   let lastY = 0
   const ROTATION_SENSITIVITY = 0.005
   const FORWARD_SENSITIVITY = 0.008
+
+  // --- Inertie / momentum ---
+  // velocityX : vélocité angulaire horizontale (yaw), en radians/frame
+  // velocityY : vélocité de déplacement vertical (forward), en unités/frame
+  // Au pointerup, on ne reset pas : l'inertie continue puis décélère.
+  let velocityX = 0
+  let velocityY = 0
+  // Facteur de damping par frame : 0.92 ≈ ~12 frames pour perdre 63% de la vitesse
+  // (équivalent à une décélération naturelle visible sans être trop longue)
+  const DAMPING = 0.92
 
   // --- Pointer Events API (remplace mouse events) ---
   // PointerEvent fournit pointerId natif pour setPointerCapture,
@@ -79,6 +111,10 @@ export async function setupCamera(
     isDragging = true
     lastX = e.clientX
     lastY = e.clientY
+    // Couper l'inertie résiduelle au moment où l'utilisateur reprend le drag,
+    // sinon la vélocité précédente se cumule avec le nouveau mouvement.
+    velocityX = 0
+    velocityY = 0
     // La capture redirige tous les events pointer vers ce canvas
     // jusqu'au releasePointerCapture, indépendamment de la position du curseur
     canvas.setPointerCapture(e.pointerId)
@@ -87,6 +123,7 @@ export async function setupCamera(
   const onPointerUp = (e: PointerEvent) => {
     if (!isDragging) return
     isDragging = false
+    // Ne pas reset velocityX/velocityY ici : l'inertie prend le relais.
     if (canvas.hasPointerCapture(e.pointerId)) {
       canvas.releasePointerCapture(e.pointerId)
     }
@@ -99,16 +136,10 @@ export async function setupCamera(
     lastX = e.clientX
     lastY = e.clientY
 
-    // Rotation horizontale (yaw gauche/droite)
-    camera.rotation.y += dx * ROTATION_SENSITIVITY
-
-    // Avance/recule proportionnel au drag vertical
-    if (dy !== 0) {
-      const forward = camera.getDirection(new Vector3(0, 0, 1))
-      forward.y = 0
-      if (forward.length() > 0.001) forward.normalize()
-      camera.position.addInPlace(forward.scale(-dy * FORWARD_SENSITIVITY))
-    }
+    // On alimente la vélocité à partir du delta courant (pas d'application directe).
+    // Le lerp (0.4) lisse les micro-saccades de souris tout en restant réactif.
+    velocityX = velocityX * 0.6 + dx * ROTATION_SENSITIVITY * 0.4
+    velocityY = velocityY * 0.6 + dy * FORWARD_SENSITIVITY * 0.4
   }
 
   // --- Molette : avancer/reculer ---
