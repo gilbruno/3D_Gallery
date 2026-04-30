@@ -31,14 +31,22 @@ export async function buildRoom(
   // et les murs projettent leur ombre sur le sol grâce au volume.
   const WALL_THICKNESS = 0.3
 
-  // Matériau temporaire visible pendant le chargement des matériaux définitifs.
-  // Cohérent avec createWallMaterial() : mêmes valeurs pour éviter le flash au swap.
-  // emissive zéro pour ne pas masquer les ombres dès le premier frame.
-  const tempMat = new StandardMaterial('temp-white', scene)
+  // Matériau temporaire murs — cohérent avec createWallMaterial() pour éviter le flash au swap.
+  // emissive zéro : les ombres portées doivent être visibles dès le premier frame.
+  const tempMat = new StandardMaterial('temp-wall', scene)
   tempMat.diffuseColor = new Color3(0.80, 0.80, 0.80)
   tempMat.emissiveColor = new Color3(0.0, 0.0, 0.0)
   tempMat.specularColor = new Color3(0.03, 0.03, 0.03)
   tempMat.backFaceCulling = false
+
+  // Matériau temporaire sol — cohérent avec createFloorMaterial() pour éviter le flash au swap.
+  // emissive élevé (0.82) : le sol est clair quasi-blanc dès le premier frame,
+  // avant le swap vers le matériau définitif chargé de façon asynchrone.
+  const tempFloorMat = new StandardMaterial('temp-floor', scene)
+  tempFloorMat.diffuseColor = new Color3(0.97, 0.97, 0.96)
+  tempFloorMat.emissiveColor = new Color3(0.82, 0.82, 0.81)
+  tempFloorMat.specularColor = new Color3(0.15, 0.15, 0.15)
+  tempFloorMat.specularPower = 64
 
   // -------------------------------------------------------------------
   // Sol — CreateGround : plan horizontal, normales vers +Y
@@ -51,9 +59,9 @@ export async function buildRoom(
     scene
   )
   floor.position = new Vector3(0, 0, 0)
-  floor.material = tempMat
+  floor.material = tempFloorMat
   floor.checkCollisions = true
-  floor.isPickable = false
+  floor.isPickable = true
 
   // -------------------------------------------------------------------
   // Pas de plafond — espace ouvert vers le haut pour la lumière zénithale.

@@ -38,15 +38,13 @@ export async function createFloorMaterial(scene: Scene): Promise<StandardMateria
   const { StandardMaterial, Color3 } = await import('@babylonjs/core')
 
   const mat = new StandardMaterial('floor-std', scene)
-  // Sol blanc grisé (#E6E6E6 ≈ 0.90) — légèrement plus sombre que les murs (0.93)
-  // pour distinguer visuellement la jonction sol/mur et créer la profondeur.
-  mat.diffuseColor = new Color3(0.90, 0.90, 0.90)
-  // ZERO émissif — le sol doit recevoir et afficher les ombres portées des murs
-  mat.emissiveColor = new Color3(0.0, 0.0, 0.0)
-  // Brillance modérée — effet pierre polie ou béton ciré, pas miroir.
-  // specularPower élevé : reflet concentré (tache brillante petite et nette)
-  mat.specularColor = new Color3(0.25, 0.25, 0.25)
-  mat.specularPower = 128
+  // Sol gris très clair quasi-blanc (≈ 0.97) avec légère teinte chaude — style galerie
+  // contemporaine minimaliste. Presque blanc mais pas pur pour éviter l'éblouissement.
+  // La légère composante chaude (R/G > B) donne une tonalité pierre de taille ou béton poli.
+  mat.diffuseColor = new Color3(0.97, 0.97, 0.96)
+  mat.emissiveColor = new Color3(0.82, 0.82, 0.81)
+  mat.specularColor = new Color3(0.15, 0.15, 0.15)
+  mat.specularPower = 64
   return mat
 }
 

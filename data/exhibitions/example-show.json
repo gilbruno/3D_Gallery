@@ -154,18 +154,18 @@
         },
         {
           "id": "artwork-front-01",
-          "imageUrl": "https://images.unsplash.com/photo-1529778873920-4da4926a72c2?w=800",
+          "imageUrl": "https://pub-d7df68395d644bd3bc80d24168d6d8be.r2.dev/artists/Martin%20Ronan/landing/slaughter-on-high-seas.webp",
           "position": [-3, 1.8, 7.3],
           "rotation": [0, 3.14159, 0],
           "dimensions": { "widthCm": 70, "heightCm": 85 },
           "frameStyle": "white",
           "meta": {
-            "title": "Instinct",
-            "artist": "Félix Moreau",
+            "title": "Slaughter on High Seas",
+            "artist": "Martin Ronan",
             "year": 2024,
             "medium": "Pastel sec",
             "price": 1100,
-            "description": "La gestuelle comme langage premier."
+            "description": "Slaughter on High Seas."
           }
         },
         {
