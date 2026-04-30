@@ -24,7 +24,7 @@ export async function createWallMaterial(scene: Scene): Promise<StandardMaterial
   // Blanc légèrement grisé (#EDEDED ≈ 0.93) — surface neutre de référence.
   // Assez clair pour l'ambiance galerie, assez sombre pour que les ombres
   // portées des murs épais soient clairement visibles.
-  mat.diffuseColor = new Color3(0.93, 0.93, 0.93)
+  mat.diffuseColor = new Color3(0.80, 0.80, 0.80)
   // ZERO émissif — crucial pour que les ombres portées soient bien visibles.
   // Un emissive non-nul annule partiellement les ombres et aplatit la scène.
   mat.emissiveColor = new Color3(0.0, 0.0, 0.0)

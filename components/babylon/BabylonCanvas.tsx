@@ -15,6 +15,11 @@ export default function BabylonCanvas({
   className,
 }: BabylonCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  // Refs pour toujours appeler la version courante des callbacks sans recréer l'engine
+  const onSceneReadyRef = useRef(onSceneReady)
+  const onRenderRef = useRef(onRender)
+  onSceneReadyRef.current = onSceneReady
+  onRenderRef.current = onRender
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -24,8 +29,7 @@ export default function BabylonCanvas({
     let scene: Scene | null = null
 
     async function init() {
-      // Import dynamique : Babylon n'est jamais évalué côté serveur
-      const { Engine, Scene } = await import('@babylonjs/core')
+      const { Engine, Scene, Color4 } = await import('@babylonjs/core')
 
       engine = new Engine(canvas, true, {
         preserveDrawingBuffer: true,
@@ -33,26 +37,15 @@ export default function BabylonCanvas({
       })
 
       scene = new Scene(engine)
-
-      // Fond blanc légèrement grisé (0.93, 0.93, 0.93) — identique à la couleur des murs.
-      // Sans plafond, le "ciel" visible au-dessus des murs se fond naturellement
-      // dans le fond de scène : l'espace paraît ouvert et infini vers le haut.
-      const { Color4 } = await import('@babylonjs/core')
       scene.clearColor = new Color4(0.93, 0.93, 0.93, 1)
 
-      // onSceneReady initialise caméra, géométrie, matériaux et textures GUI.
-      // On le fait AVANT de démarrer le render loop pour éviter l'erreur WebGL
-      // "uniformMatrix4fv: location is not from the associated program" qui survient
-      // quand AdvancedDynamicTexture compile ses shaders pendant un render en cours.
-      if (onSceneReady) {
-        await onSceneReady(scene, canvas!)
+      if (onSceneReadyRef.current) {
+        await onSceneReadyRef.current(scene, canvas!)
       }
 
       engine.runRenderLoop(() => {
         if (!scene) return
-        if (onRender) {
-          onRender(scene)
-        }
+        onRenderRef.current?.(scene)
         scene.render()
       })
     }
@@ -61,9 +54,7 @@ export default function BabylonCanvas({
       canvas.focus()
     }).catch(console.error)
 
-    const handleResize = () => {
-      engine?.resize()
-    }
+    const handleResize = () => engine?.resize()
     window.addEventListener('resize', handleResize)
 
     return () => {
@@ -73,8 +64,6 @@ export default function BabylonCanvas({
       scene = null
       engine = null
     }
-    // onSceneReady et onRender sont des callbacks stables — on les exclut
-    // intentionnellement pour éviter de recréer l'engine à chaque render React.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

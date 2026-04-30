@@ -35,7 +35,7 @@ export async function buildRoom(
   // Cohérent avec createWallMaterial() : mêmes valeurs pour éviter le flash au swap.
   // emissive zéro pour ne pas masquer les ombres dès le premier frame.
   const tempMat = new StandardMaterial('temp-white', scene)
-  tempMat.diffuseColor = new Color3(0.93, 0.93, 0.93)
+  tempMat.diffuseColor = new Color3(0.80, 0.80, 0.80)
   tempMat.emissiveColor = new Color3(0.0, 0.0, 0.0)
   tempMat.specularColor = new Color3(0.03, 0.03, 0.03)
   tempMat.backFaceCulling = false

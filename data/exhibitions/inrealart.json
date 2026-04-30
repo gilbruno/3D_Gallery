@@ -11,7 +11,7 @@
         {
           "id": "artwork-back-01",
           "imageUrl": "https://pub-d7df68395d644bd3bc80d24168d6d8be.r2.dev/artists/Adam%20Akner/landing/entre-deux.webp",
-          "position": [-3, 1.8, -7.3],
+          "position": [-3, 1.8, -7.4],
           "rotation": [0, 0, 0],
           "dimensions": { "widthCm": 80, "heightCm": 65 },
           "frameStyle": "white",
@@ -21,16 +21,16 @@
             "year": 2024,
             "medium": "Huile sur toile",
             "price": 2800,
-            "description": "Une frontière fragile entre le rêve et la réalité."
+            "description": "Une frontière fragile entre le rêv et la réalite."
           }
         },
         {
           "id": "artwork-back-02",
           "imageUrl": "https://pub-d7df68395d644bd3bc80d24168d6d8be.r2.dev/artists/Fran%C3%A7ois%20Poulat/landing/hommage-a-basquiat.webp",
-          "position": [0, 1.8, -7.3],
+          "position": [0, 1.8, -7.4],
           "rotation": [0, 0, 0],
           "dimensions": { "widthCm": 60, "heightCm": 90 },
-          "frameStyle": "white",
+          "frameStyle": "black",
           "meta": {
             "title": "Hommage à Basquiat",
             "artist": "François Poulat",
@@ -43,7 +43,7 @@
         {
           "id": "artwork-back-03",
           "imageUrl": "https://pub-d7df68395d644bd3bc80d24168d6d8be.r2.dev/artists/Alain%20Pontecorvo/Trafic%20fin%20de%20journ%C3%A9e.webp",
-          "position": [3, 1.8, -7.3],
+          "position": [3, 1.8, -7.4],
           "rotation": [0, 0, 0],
           "dimensions": { "widthCm": 80, "heightCm": 60 },
           "frameStyle": "white",
@@ -59,10 +59,10 @@
         {
           "id": "artwork-left-01",
           "imageUrl": "https://pub-d7df68395d644bd3bc80d24168d6d8be.r2.dev/artists/Jean-Marie%20Gitard/4%20Before%20Big%20Bang!.webp",
-          "position": [-4.7, 1.8, -4.5],
+          "position": [-4.9, 1.8, -4.5],
           "rotation": [0, 1.5708, 0],
           "dimensions": { "widthCm": 70, "heightCm": 95 },
-          "frameStyle": "white",
+          "frameStyle": "black",
           "meta": {
             "title": "Before Big Bang!",
             "artist": "Jean-Marie Gitard",
@@ -75,7 +75,7 @@
         {
           "id": "artwork-left-02",
           "imageUrl": "https://pub-d7df68395d644bd3bc80d24168d6d8be.r2.dev/artists/Ekaterina%20Aristova/landing/the-red-mountain-of-the-soul.webp",
-          "position": [-4.7, 1.8, 0],
+          "position": [-4.9, 1.8, 0],
           "rotation": [0, 1.5708, 0],
           "dimensions": { "widthCm": 90, "heightCm": 65 },
           "frameStyle": "white",
@@ -91,10 +91,10 @@
         {
           "id": "artwork-left-03",
           "imageUrl": "https://pub-d7df68395d644bd3bc80d24168d6d8be.r2.dev/artists/Nicole%20%20Azoulay/landing/ciel-agite.webp",
-          "position": [-4.7, 1.8, 4.5],
+          "position": [-4.9, 1.8, 4.5],
           "rotation": [0, 1.5708, 0],
           "dimensions": { "widthCm": 75, "heightCm": 75 },
-          "frameStyle": "white",
+          "frameStyle": "black",
           "meta": {
             "title": "Ciel agité",
             "artist": "Nicole Azoulay",
@@ -107,7 +107,7 @@
         {
           "id": "artwork-right-01",
           "imageUrl": "https://pub-d7df68395d644bd3bc80d24168d6d8be.r2.dev/artists/Marianne%20Quinzin/landing/l-heure-bleue.webp",
-          "position": [4.7, 1.8, -4.5],
+          "position": [4.9, 1.8, -4.5],
           "rotation": [0, -1.5708, 0],
           "dimensions": { "widthCm": 65, "heightCm": 95 },
           "frameStyle": "white",
@@ -123,10 +123,10 @@
         {
           "id": "artwork-right-02",
           "imageUrl": "https://pub-d7df68395d644bd3bc80d24168d6d8be.r2.dev/presale/dropPanel/Leloluce/HelloMiami.webp",
-          "position": [4.7, 1.8, 0],
+          "position": [4.9, 1.8, 0],
           "rotation": [0, -1.5708, 0],
           "dimensions": { "widthCm": 85, "heightCm": 60 },
-          "frameStyle": "white",
+          "frameStyle": "black",
           "meta": {
             "title": "Hello Miami",
             "artist": "Leloluce",
@@ -139,7 +139,7 @@
         {
           "id": "artwork-right-03",
           "imageUrl": "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800",
-          "position": [4.7, 1.8, 4.5],
+          "position": [4.9, 1.8, 4.5],
           "rotation": [0, -1.5708, 0],
           "dimensions": { "widthCm": 80, "heightCm": 70 },
           "frameStyle": "white",
@@ -155,10 +155,10 @@
         {
           "id": "artwork-front-01",
           "imageUrl": "https://images.unsplash.com/photo-1529778873920-4da4926a72c2?w=800",
-          "position": [-3, 1.8, 7.3],
+          "position": [-3, 1.8, 7.4],
           "rotation": [0, 3.14159, 0],
           "dimensions": { "widthCm": 70, "heightCm": 85 },
-          "frameStyle": "white",
+          "frameStyle": "black",
           "meta": {
             "title": "Instinct",
             "artist": "Félix Moreau",
@@ -171,7 +171,7 @@
         {
           "id": "artwork-front-02",
           "imageUrl": "https://pub-d7df68395d644bd3bc80d24168d6d8be.r2.dev/artists/Florence%20AUTELIN/landing/la-piscine.webp",
-          "position": [0, 1.8, 7.3],
+          "position": [0, 1.8, 7.4],
           "rotation": [0, 3.14159, 0],
           "dimensions": { "widthCm": 100, "heightCm": 70 },
           "frameStyle": "white",
@@ -187,7 +187,7 @@
         {
           "id": "artwork-front-03",
           "imageUrl": "https://pub-d7df68395d644bd3bc80d24168d6d8be.r2.dev/artists/Pascale%20Defrancq/landing/lumiere-arctique.webp",
-          "position": [3, 1.8, 7.3],
+          "position": [3, 1.8, 7.4],
           "rotation": [0, 3.14159, 0],
           "dimensions": { "widthCm": 75, "heightCm": 75 },
           "frameStyle": "white",

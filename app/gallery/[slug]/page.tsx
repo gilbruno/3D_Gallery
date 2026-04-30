@@ -1,5 +1,8 @@
 import type { Metadata } from 'next'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import GalleryClient from './GalleryClient'
+import type { ExhibitionConfig } from '@/data/exhibitions/schema'
 
 interface GalleryPageProps {
   params: Promise<{ slug: string }>
@@ -18,10 +21,17 @@ export async function generateMetadata(
 export default async function GalleryPage({ params }: GalleryPageProps) {
   const { slug } = await params
 
+  let exhibition: ExhibitionConfig | null = null
+  try {
+    const filePath = join(process.cwd(), 'data', 'exhibitions', `${slug}.json`)
+    exhibition = JSON.parse(readFileSync(filePath, 'utf-8')) as ExhibitionConfig
+  } catch {
+    console.error(`[GalleryPage] exposition introuvable : ${slug}`)
+  }
+
   return (
-    // Plein écran sans padding, le canvas Babylon occupe tout l'espace
     <main className="w-full h-screen overflow-hidden" data-slug={slug}>
-      <GalleryClient slug={slug} />
+      <GalleryClient slug={slug} exhibition={exhibition} />
     </main>
   )
 }

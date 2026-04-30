@@ -3,18 +3,22 @@
  * Charge les œuvres depuis un ArtworkConfig[], crée :
  *   - Mesh plan texturé (image)
  *   - Cadre procédural 4 boîtes parentées
- *   - Spotlight individuel au plafond
  *   - Cartel 3D via @babylonjs/gui
  *   - ActionManager pour interaction clic + hover
+ *
+ * Note : les SpotLights individuels ont été supprimés.
+ * Les œuvres utilisent disableLighting=true (emissiveTexture) — les spots
+ * n'avaient aucun effet sur elles et projetaient des halos ovales visibles
+ * sur les murs. L'éclairage ambiant global (HemisphericLight + DirectionalLight)
+ * assure un rendu uniforme de la salle.
  */
 
-import type { Scene, Mesh, SpotLight } from '@babylonjs/core'
+import type { Scene, Mesh } from '@babylonjs/core'
 import type { ArtworkConfig, FrameStyle } from '@/data/exhibitions/schema'
 
 export interface LoadedArtwork {
   plane: Mesh
   frame: Mesh[]
-  spot: SpotLight
   label: Mesh
   config: ArtworkConfig
 }
@@ -157,6 +161,8 @@ async function buildLabel(
   labelPlane.rotation = plane.rotation.clone()
   labelPlane.isPickable = false
   labelPlane.billboardMode = BabMesh.BILLBOARDMODE_NONE
+  // Masqué par défaut — affiché uniquement au survol pour ne pas polluer la vue
+  labelPlane.setEnabled(false)
 
   // Texture GUI
   // uScale = -1 corrige l'inversion horizontale (miroir) du texte sur le plan
@@ -218,7 +224,6 @@ export async function loadArtworks(
     Texture,
     Color3,
     Vector3,
-    SpotLight: BabSpotLight,
     ActionManager,
     ExecuteCodeAction,
   } = await import('@babylonjs/core')
@@ -251,11 +256,9 @@ export async function loadArtworks(
     // Matériau image — emissiveColor blanc + disableLighting pour affichage
     // fidèle des couleurs sans dépendance à l'IBL
     const mat = new StandardMaterial(`mat-${artwork.id}`, scene)
-    const tex = new Texture(artwork.imageUrl, scene, false, false)
+    const tex = new Texture(artwork.imageUrl, scene)
     tex.hasAlpha = false
-    mat.diffuseTexture = tex
     mat.emissiveTexture = tex
-    mat.emissiveColor = new Color3(1, 1, 1)
     mat.disableLighting = true
     mat.backFaceCulling = false
     plane.material = mat
@@ -264,25 +267,6 @@ export async function loadArtworks(
     // Étape 9b : cadre procédural
     // ---------------------------------------------------------------
     const frame = await buildFrame(artwork, plane, meshWidth, meshHeight, scene)
-
-    // ---------------------------------------------------------------
-    // Étape 9c : SpotLight individuel
-    // ---------------------------------------------------------------
-    const spot = new BabSpotLight(
-      `spot-${artwork.id}`,
-      new Vector3(
-        artwork.spotPosition[0],
-        artwork.spotPosition[1],
-        artwork.spotPosition[2]
-      ),
-      new Vector3(0, -1, 0.3).normalize(),
-      Math.PI / 5,
-      2,
-      scene
-    )
-    spot.intensity = 1.2
-    spot.diffuse = new Color3(1, 0.97, 0.9)
-    spot.specular = new Color3(0.5, 0.48, 0.45)
 
     // ---------------------------------------------------------------
     // Étape 10 : cartel 3D
@@ -301,25 +285,25 @@ export async function loadArtworks(
       })
     )
 
-    // Hover ON → intensité spot 1.2 → 1.6 + curseur pointer
+    // Hover ON → curseur pointer + affiche cartel
     plane.actionManager.registerAction(
       new ExecuteCodeAction(ActionManager.OnPointerOverTrigger, () => {
-        spot.intensity = 1.6
+        label.setEnabled(true)
         const canvas = scene.getEngine().getRenderingCanvas()
         if (canvas) canvas.style.cursor = 'pointer'
       })
     )
 
-    // Hover OFF → retour intensité + curseur normal
+    // Hover OFF → curseur normal + masque cartel
     plane.actionManager.registerAction(
       new ExecuteCodeAction(ActionManager.OnPointerOutTrigger, () => {
-        spot.intensity = 1.2
+        label.setEnabled(false)
         const canvas = scene.getEngine().getRenderingCanvas()
         if (canvas) canvas.style.cursor = 'default'
       })
     )
 
-    results.push({ plane, frame, spot, label, config: artwork })
+    results.push({ plane, frame, label, config: artwork })
   }
 
   return results

@@ -31,10 +31,11 @@ export interface ArtworkConfig {
   dimensions: ArtworkDimensions
   frameStyle: FrameStyle
   /**
-   * Position du SpotLight au plafond éclairant cette œuvre.
-   * Typiquement y ≈ 3.7 (près du plafond de 4m), 0.5m devant le mur.
+   * @deprecated Les SpotLights individuels ont été supprimés — les œuvres
+   * utilisent disableLighting=true et l'éclairage ambiant global suffit.
+   * Ce champ est conservé pour rétrocompatibilité JSON uniquement.
    */
-  spotPosition: [number, number, number]
+  spotPosition?: [number, number, number]
   meta: ArtworkMeta
 }
 

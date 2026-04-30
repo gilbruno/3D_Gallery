@@ -86,18 +86,9 @@ export default function GalleryScene({
       // Phase 3 : chargement des œuvres
       // ---------------------------------------------------------------
 
-      // Résolution de la config exposition
-      let config: ExhibitionConfig | null = exhibition ?? null
+      const config: ExhibitionConfig | null = exhibition ?? null
 
-      if (!config && slug) {
-        try {
-          // Import dynamique du JSON (Next.js le bundle statiquement)
-          const mod = await import(`@/data/exhibitions/${slug}.json`)
-          config = mod.default as ExhibitionConfig
-        } catch (err) {
-          console.error(`[GalleryScene] impossible de charger l'exposition "${slug}"`, err)
-        }
-      }
+      console.log('[GalleryScene] exhibition prop:', config ? `${config.rooms[0]?.artworks?.length} artworks` : 'NULL')
 
       if (!config) {
         console.warn('[GalleryScene] aucune config exposition — scène vide')
