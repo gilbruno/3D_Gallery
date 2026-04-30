@@ -8,7 +8,6 @@ export interface RoomDimensions {
 
 export interface RoomMeshes {
   floor: Mesh
-  ceiling: Mesh
   walls: {
     back: Mesh
     front: Mesh
@@ -22,18 +21,23 @@ export async function buildRoom(
   scene: Scene,
   dimensions: RoomDimensions
 ): Promise<RoomMeshes> {
-  const { MeshBuilder, StandardMaterial, Color3, Vector3, Mesh: BabMesh } = await import(
+  const { MeshBuilder, StandardMaterial, Color3, Vector3 } = await import(
     '@babylonjs/core'
   )
 
   const { width, height, depth } = dimensions
 
-  // Matériau temporaire neutre — sera remplacé par GalleryScene avec les matériaux
-  // définitifs. emissiveColor minimal (pas blanc uniforme) pour que la directionnelle
-  // révèle déjà la géométrie à ce stade.
+  // Épaisseur réelle des murs (30cm) — l'arête supérieure est visible depuis la caméra
+  // et les murs projettent leur ombre sur le sol grâce au volume.
+  const WALL_THICKNESS = 0.3
+
+  // Matériau temporaire visible pendant le chargement des matériaux définitifs.
+  // Cohérent avec createWallMaterial() : mêmes valeurs pour éviter le flash au swap.
+  // emissive zéro pour ne pas masquer les ombres dès le premier frame.
   const tempMat = new StandardMaterial('temp-white', scene)
-  tempMat.diffuseColor = new Color3(0.9, 0.9, 0.9)
-  tempMat.emissiveColor = new Color3(0.05, 0.05, 0.05)
+  tempMat.diffuseColor = new Color3(0.93, 0.93, 0.93)
+  tempMat.emissiveColor = new Color3(0.0, 0.0, 0.0)
+  tempMat.specularColor = new Color3(0.03, 0.03, 0.03)
   tempMat.backFaceCulling = false
 
   // -------------------------------------------------------------------
@@ -52,80 +56,59 @@ export async function buildRoom(
   floor.isPickable = false
 
   // -------------------------------------------------------------------
-  // Plafond — plan horizontal retourné (normales vers -Y = vers le bas)
-  // À Y=height (4m) — rotation.x=PI retourne les normales vers le bas,
-  // rendant la face visible depuis l'intérieur de la salle
+  // Pas de plafond — espace ouvert vers le haut pour la lumière zénithale.
+  // Le fond de scène clearColor (0.93, 0.93, 0.93) se fond naturellement
+  // avec les murs blancs, donnant l'illusion d'un espace ouvert infini.
   // -------------------------------------------------------------------
-  const ceiling = MeshBuilder.CreateGround(
-    'ceiling',
-    { width, height: depth, subdivisions: 1 },
-    scene
-  )
-  ceiling.position = new Vector3(0, height, 0)
-  ceiling.rotation = new Vector3(Math.PI, 0, 0)
-  ceiling.material = tempMat
-  ceiling.checkCollisions = true
-  ceiling.isPickable = false
 
   // -------------------------------------------------------------------
-  // Mur arrière (fond de salle) — à Z=-depth/2 = Z=-7.5
-  // DOUBLESIDE : visible depuis les deux côtés (sécurité si caméra traverse)
-  // rotation.y=PI : face avant du plan pointe vers +Z (vers la caméra)
-  // centré à Y=height/2=2 pour couvrir Y=0 à Y=4
+  // Murs avec épaisseur — CreateBox avec depth=WALL_THICKNESS.
+  // Cela donne une vraie arête supérieure visible depuis la caméra et
+  // permet aux murs de projeter des ombres portées réalistes sur le sol.
   // -------------------------------------------------------------------
-  const wallBack = MeshBuilder.CreatePlane(
+
+  // Mur arrière (fond de salle) — à Z=-depth/2
+  // Centré à Y=height/2 pour couvrir Y=0 à Y=height
+  const wallBack = MeshBuilder.CreateBox(
     'wall-back',
-    { width, height, sideOrientation: BabMesh.DOUBLESIDE },
+    { width, height, depth: WALL_THICKNESS },
     scene
   )
   wallBack.position = new Vector3(0, height / 2, -depth / 2)
-  wallBack.rotation = new Vector3(0, Math.PI, 0)
   wallBack.material = tempMat
   wallBack.checkCollisions = true
   wallBack.isPickable = false
 
-  // -------------------------------------------------------------------
-  // Mur avant (entrée) — à Z=+depth/2 = Z=+7.5
-  // rotation.y=0 : face avant pointe vers -Z (vers l'intérieur de la salle)
-  // -------------------------------------------------------------------
-  const wallFront = MeshBuilder.CreatePlane(
+  // Mur avant (entrée) — à Z=+depth/2
+  const wallFront = MeshBuilder.CreateBox(
     'wall-front',
-    { width, height, sideOrientation: BabMesh.DOUBLESIDE },
+    { width, height, depth: WALL_THICKNESS },
     scene
   )
   wallFront.position = new Vector3(0, height / 2, depth / 2)
-  wallFront.rotation = new Vector3(0, 0, 0)
   wallFront.material = tempMat
   wallFront.checkCollisions = true
   wallFront.isPickable = false
 
-  // -------------------------------------------------------------------
-  // Mur gauche — à X=-width/2 = X=-5
-  // rotation.y=-PI/2 : face avant pointe vers +X (vers l'intérieur)
-  // width du plan = depth (15m) pour couvrir toute la longueur de la salle
-  // -------------------------------------------------------------------
-  const wallLeft = MeshBuilder.CreatePlane(
+  // Mur gauche — à X=-width/2
+  // depth du box = depth de la salle pour couvrir toute la longueur
+  const wallLeft = MeshBuilder.CreateBox(
     'wall-left',
-    { width: depth, height, sideOrientation: BabMesh.DOUBLESIDE },
+    { width: WALL_THICKNESS, height, depth },
     scene
   )
   wallLeft.position = new Vector3(-width / 2, height / 2, 0)
-  wallLeft.rotation = new Vector3(0, -Math.PI / 2, 0)
   wallLeft.material = tempMat
   wallLeft.checkCollisions = true
   wallLeft.isPickable = false
 
-  // -------------------------------------------------------------------
-  // Mur droit — à X=+width/2 = X=+5
-  // rotation.y=PI/2 : face avant pointe vers -X (vers l'intérieur)
-  // -------------------------------------------------------------------
-  const wallRight = MeshBuilder.CreatePlane(
+  // Mur droit — à X=+width/2
+  const wallRight = MeshBuilder.CreateBox(
     'wall-right',
-    { width: depth, height, sideOrientation: BabMesh.DOUBLESIDE },
+    { width: WALL_THICKNESS, height, depth },
     scene
   )
   wallRight.position = new Vector3(width / 2, height / 2, 0)
-  wallRight.rotation = new Vector3(0, Math.PI / 2, 0)
   wallRight.material = tempMat
   wallRight.checkCollisions = true
   wallRight.isPickable = false
@@ -133,12 +116,12 @@ export async function buildRoom(
   // -------------------------------------------------------------------
   // Plinthes — lignes sombres à la base des 4 murs
   // Hauteur 0.1m, posées sur le sol (Y=0.05), saillent de 0.02m
-  // Créent un contraste sol/mur net qui renforce la perception de perspective
+  // Couleur discrète (0.82, 0.82, 0.82) — jonction visible mais non agressive
   // -------------------------------------------------------------------
   const skirtingMat = new StandardMaterial('skirting-temp', scene)
-  skirtingMat.diffuseColor = new Color3(0.3, 0.28, 0.26)
-  skirtingMat.emissiveColor = new Color3(0.04, 0.04, 0.03)
-  skirtingMat.specularColor = new Color3(0.05, 0.05, 0.05)
+  skirtingMat.diffuseColor = new Color3(0.82, 0.82, 0.82)
+  skirtingMat.emissiveColor = new Color3(0.0, 0.0, 0.0)
+  skirtingMat.specularColor = new Color3(0.03, 0.03, 0.03)
 
   const skirtingH = 0.1   // hauteur de la plinthe (m)
   const skirtingD = 0.02  // épaisseur / saillie (m)
@@ -150,7 +133,7 @@ export async function buildRoom(
     { width, height: skirtingH, depth: skirtingD },
     scene
   )
-  skirtBack.position = new Vector3(0, skirtingY, -depth / 2 + skirtingD / 2)
+  skirtBack.position = new Vector3(0, skirtingY, -depth / 2 + skirtingD / 2 + WALL_THICKNESS / 2)
   skirtBack.material = skirtingMat
   skirtBack.isPickable = false
 
@@ -160,7 +143,7 @@ export async function buildRoom(
     { width, height: skirtingH, depth: skirtingD },
     scene
   )
-  skirtFront.position = new Vector3(0, skirtingY, depth / 2 - skirtingD / 2)
+  skirtFront.position = new Vector3(0, skirtingY, depth / 2 - skirtingD / 2 - WALL_THICKNESS / 2)
   skirtFront.material = skirtingMat
   skirtFront.isPickable = false
 
@@ -170,7 +153,7 @@ export async function buildRoom(
     { width: skirtingD, height: skirtingH, depth },
     scene
   )
-  skirtLeft.position = new Vector3(-width / 2 + skirtingD / 2, skirtingY, 0)
+  skirtLeft.position = new Vector3(-width / 2 + skirtingD / 2 + WALL_THICKNESS / 2, skirtingY, 0)
   skirtLeft.material = skirtingMat
   skirtLeft.isPickable = false
 
@@ -180,13 +163,12 @@ export async function buildRoom(
     { width: skirtingD, height: skirtingH, depth },
     scene
   )
-  skirtRight.position = new Vector3(width / 2 - skirtingD / 2, skirtingY, 0)
+  skirtRight.position = new Vector3(width / 2 - skirtingD / 2 - WALL_THICKNESS / 2, skirtingY, 0)
   skirtRight.material = skirtingMat
   skirtRight.isPickable = false
 
   return {
     floor,
-    ceiling,
     walls: {
       back: wallBack,
       front: wallFront,

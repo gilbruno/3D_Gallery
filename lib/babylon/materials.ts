@@ -1,26 +1,35 @@
 import type { Scene, StandardMaterial } from '@babylonjs/core'
 
 /**
- * StandardMaterial avec emissiveColor pour les surfaces de la salle.
- * PBRMaterial sans HDRI/IBL rend en noir et déclenche le shader rgbdDecode —
- * on utilise StandardMaterial pour garantir la visibilité des surfaces
- * indépendamment de l'IBL.
+ * Matériaux "white cube gallery" — style galerie d'art contemporaine haut de gamme.
+ * Palette monochrome blanc/gris très clair, ombres douces, sol légèrement lustré.
  *
- * Différenciation visuelle intentionnelle :
- *   - Sol : parquet chêne moyen (warm), contraste maximal avec les murs blancs
- *   - Murs : blanc cassé légèrement chaud, emissive faible pour rester visibles
- *   - Plafond : légèrement plus sombre que les murs pour ancrer le volume
+ * Principe d'éclairage retenu (galerie ouverte sans plafond) :
+ *   - emissiveColor = ZERO — les ombres portées doivent être pleinement visibles
+ *   - diffuseColor = couleur réelle réagissant à la HemisphericLight + DirectionalLight
+ *   - specularColor calibré : quasi-zéro pour les murs (mat), modéré pour le sol (lustré)
+ *
+ * Hiérarchie tonale "white cube" :
+ *   - Murs   : blanc légèrement grisé (#EDEDED ≈ 0.93) — surface de référence neutre
+ *   - Sol    : blanc grisé légèrement plus sombre (#E6E6E6 ≈ 0.90) + légère brillance
+ *   - Plinthe : gris discret (#D1D1D1 ≈ 0.82) — séparation subtile sol/mur
+ *
+ * Le plafond est supprimé — l'espace est ouvert vers le haut (lumière zénithale naturelle).
  */
 
 export async function createWallMaterial(scene: Scene): Promise<StandardMaterial> {
   const { StandardMaterial, Color3 } = await import('@babylonjs/core')
 
   const mat = new StandardMaterial('wall-std', scene)
-  // Blanc cassé légèrement warm — évoque le blanc galerie (pas blanc pur qui brûle)
-  mat.diffuseColor = new Color3(0.96, 0.95, 0.92)
-  // Auto-éclairage très faible : garantit la visibilité même dans les zones peu éclairées
-  mat.emissiveColor = new Color3(0.15, 0.14, 0.13)
-  mat.specularColor = new Color3(0.05, 0.05, 0.05)
+  // Blanc légèrement grisé (#EDEDED ≈ 0.93) — surface neutre de référence.
+  // Assez clair pour l'ambiance galerie, assez sombre pour que les ombres
+  // portées des murs épais soient clairement visibles.
+  mat.diffuseColor = new Color3(0.93, 0.93, 0.93)
+  // ZERO émissif — crucial pour que les ombres portées soient bien visibles.
+  // Un emissive non-nul annule partiellement les ombres et aplatit la scène.
+  mat.emissiveColor = new Color3(0.0, 0.0, 0.0)
+  // Quasi pas de spéculaire — surface mate galerie, pas d'effet brillant
+  mat.specularColor = new Color3(0.03, 0.03, 0.03)
   mat.backFaceCulling = false
   return mat
 }
@@ -29,37 +38,30 @@ export async function createFloorMaterial(scene: Scene): Promise<StandardMateria
   const { StandardMaterial, Color3 } = await import('@babylonjs/core')
 
   const mat = new StandardMaterial('floor-std', scene)
-  // Parquet chêne moyen — couleur warm qui contraste clairement avec les murs blancs
-  mat.diffuseColor = new Color3(0.72, 0.62, 0.48)
-  mat.emissiveColor = new Color3(0.05, 0.04, 0.03)
-  mat.specularColor = new Color3(0.2, 0.18, 0.15)
-  mat.specularPower = 32
-  return mat
-}
-
-export async function createCeilingMaterial(scene: Scene): Promise<StandardMaterial> {
-  const { StandardMaterial, Color3 } = await import('@babylonjs/core')
-
-  const mat = new StandardMaterial('ceiling-std', scene)
-  // Légèrement plus sombre que les murs — ancre le plafond visuellement,
-  // évite la confusion avec les murs (sans HDRI le plafond disparaît sinon)
-  mat.diffuseColor = new Color3(0.88, 0.87, 0.85)
-  mat.emissiveColor = new Color3(0.12, 0.12, 0.12)
-  mat.specularColor = new Color3(0.02, 0.02, 0.02)
-  mat.backFaceCulling = false
+  // Sol blanc grisé (#E6E6E6 ≈ 0.90) — légèrement plus sombre que les murs (0.93)
+  // pour distinguer visuellement la jonction sol/mur et créer la profondeur.
+  mat.diffuseColor = new Color3(0.90, 0.90, 0.90)
+  // ZERO émissif — le sol doit recevoir et afficher les ombres portées des murs
+  mat.emissiveColor = new Color3(0.0, 0.0, 0.0)
+  // Brillance modérée — effet pierre polie ou béton ciré, pas miroir.
+  // specularPower élevé : reflet concentré (tache brillante petite et nette)
+  mat.specularColor = new Color3(0.25, 0.25, 0.25)
+  mat.specularPower = 128
   return mat
 }
 
 /**
- * Matériau de plinthe — gris foncé warm pour marquer la jonction sol/mur.
- * Crée une ligne de contraste qui renforce la perception de perspective.
+ * Matériau de plinthe — gris discret pour une jonction sol/mur subtile.
+ * Style "white cube" : séparation visible mais non agressive.
  */
 export async function createSkirtingMaterial(scene: Scene): Promise<StandardMaterial> {
   const { StandardMaterial, Color3 } = await import('@babylonjs/core')
 
   const mat = new StandardMaterial('skirting-std', scene)
-  mat.diffuseColor = new Color3(0.3, 0.28, 0.26)
-  mat.emissiveColor = new Color3(0.04, 0.04, 0.03)
-  mat.specularColor = new Color3(0.05, 0.05, 0.05)
+  // Gris clair (#D1D1D1 ≈ 0.82) — marque la transition sol/mur sans noir agressif.
+  // Entre le sol (0.90) et blanc pur : transition douce, lecture spatiale claire.
+  mat.diffuseColor = new Color3(0.82, 0.82, 0.82)
+  mat.emissiveColor = new Color3(0.0, 0.0, 0.0)
+  mat.specularColor = new Color3(0.03, 0.03, 0.03)
   return mat
 }

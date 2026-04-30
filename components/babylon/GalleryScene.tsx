@@ -10,7 +10,7 @@ import { loadArtworks } from './ArtworkLoader'
 import {
   createWallMaterial,
   createFloorMaterial,
-  createCeilingMaterial,
+  createSkirtingMaterial,
 } from '@/lib/babylon/materials'
 // Les matériaux retournés sont désormais des StandardMaterial (pas PBRMaterial)
 // — typage implicite via inférence, pas besoin d'importer le type explicitement
@@ -40,28 +40,47 @@ export default function GalleryScene({
 
       canvasRef.current = canvas
 
-      // Étape 6 : éclairage ambiant + fill
-      await setupLighting(scene)
+      // Étape 6 : éclairage ambiant + fill + shadow generator
+      const { shadowGenerator } = await setupLighting(scene)
 
       // Étape 5 : construction de la salle procédurale
       const room = await buildRoom(scene, ROOM_DIMENSIONS)
 
+      // Murs épais comme shadow casters — leur volume (CreateBox avec depth=0.3)
+      // projette des ombres portées réalistes sur le sol (arête supérieure visible).
+      // Sol comme receiver uniquement — c'est lui qui affiche les ombres des murs.
+      const wallMeshes = [
+        room.walls.back,
+        room.walls.front,
+        room.walls.left,
+        room.walls.right,
+        ...room.skirtings,
+      ]
+      for (const mesh of wallMeshes) {
+        shadowGenerator.addShadowCaster(mesh)
+        mesh.receiveShadows = true
+      }
+      // Le sol reçoit les ombres mais ne les projette pas (plan horizontal)
+      room.floor.receiveShadows = true
+
       // Étape 7 : caméra first-person
       await setupCamera(scene, canvas)
 
-      // Étape 8 : matériaux PBR des surfaces
-      const [wallMat, floorMat, ceilingMat] = await Promise.all([
+      // Étape 8 : matériaux des surfaces (galerie ouverte sans plafond)
+      const [wallMat, floorMat, skirtingMat] = await Promise.all([
         createWallMaterial(scene),
         createFloorMaterial(scene),
-        createCeilingMaterial(scene),
+        createSkirtingMaterial(scene),
       ])
 
       room.floor.material = floorMat
-      room.ceiling.material = ceilingMat
       room.walls.back.material = wallMat
       room.walls.front.material = wallMat
       room.walls.left.material = wallMat
       room.walls.right.material = wallMat
+      for (const skirting of room.skirtings) {
+        skirting.material = skirtingMat
+      }
 
       // ---------------------------------------------------------------
       // Phase 3 : chargement des œuvres

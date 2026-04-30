@@ -34,9 +34,11 @@ export default function BabylonCanvas({
 
       scene = new Scene(engine)
 
-      // Fond gris très clair, quasi-blanc — indépendant du rendu 3D
+      // Fond blanc légèrement grisé (0.93, 0.93, 0.93) — identique à la couleur des murs.
+      // Sans plafond, le "ciel" visible au-dessus des murs se fond naturellement
+      // dans le fond de scène : l'espace paraît ouvert et infini vers le haut.
       const { Color4 } = await import('@babylonjs/core')
-      scene.clearColor = new Color4(0.94, 0.94, 0.94, 1)
+      scene.clearColor = new Color4(0.93, 0.93, 0.93, 1)
 
       // onSceneReady initialise caméra, géométrie, matériaux et textures GUI.
       // On le fait AVANT de démarrer le render loop pour éviter l'erreur WebGL
