@@ -4,8 +4,7 @@ import { useState, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import LoadingScreen from '@/components/ui/LoadingScreen'
 import ArtworkPopup from '@/components/ui/ArtworkPopup'
-import GalleryHeader from '@/components/ui/GalleryHeader'
-import GalleryFooter from '@/components/ui/GalleryFooter'
+import SiteLayout from '@/components/ui/SiteLayout'
 import type { ArtworkConfig, ExhibitionConfig } from '@/data/exhibitions/schema'
 import type { CameraControls } from '@/components/babylon/CameraController'
 
@@ -59,9 +58,8 @@ export default function GalleryClient({ slug, exhibition }: GalleryClientProps) 
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <GalleryHeader exhibitionTitle={exhibition?.title} />
-      <main style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <SiteLayout exhibitionTitle={exhibition?.title} fullHeightMain>
+      <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
         <GalleryScene
           slug={slug}
           exhibition={exhibition ?? undefined}
@@ -101,8 +99,7 @@ export default function GalleryClient({ slug, exhibition }: GalleryClientProps) 
         )}
 
         <ArtworkPopup artwork={hoveredArtwork} />
-      </main>
-      <GalleryFooter />
-    </div>
+      </div>
+    </SiteLayout>
   )
 }

@@ -34,7 +34,7 @@ export default function GalleryFooter() {
     <footer
       style={{
         background: '#0a0a0a',
-        padding: '20px 32px',
+        padding: '52px 32px',
         borderTop: '1px solid rgba(255,255,255,0.1)',
         flexShrink: 0,
       }}
