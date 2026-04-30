@@ -40,13 +40,13 @@ export async function buildRoom(
   tempMat.backFaceCulling = false
 
   // Matériau temporaire sol — cohérent avec createFloorMaterial() pour éviter le flash au swap.
-  // emissive élevé (0.82) : le sol est clair quasi-blanc dès le premier frame,
-  // avant le swap vers le matériau définitif chargé de façon asynchrone.
+  // diffuse/emissive alignés sur le fond #F5F5F3 (≈ 0.96, 0.96, 0.95) de la DynamicTexture.
+  // emissive (0.78) : luminosité de base identique à l'emissiveColor du matériau définitif.
   const tempFloorMat = new StandardMaterial('temp-floor', scene)
-  tempFloorMat.diffuseColor = new Color3(0.97, 0.97, 0.96)
-  tempFloorMat.emissiveColor = new Color3(0.82, 0.82, 0.81)
-  tempFloorMat.specularColor = new Color3(0.15, 0.15, 0.15)
-  tempFloorMat.specularPower = 64
+  tempFloorMat.diffuseColor = new Color3(0.96, 0.96, 0.95)
+  tempFloorMat.emissiveColor = new Color3(0.78, 0.78, 0.78)
+  tempFloorMat.specularColor = new Color3(0.12, 0.12, 0.12)
+  tempFloorMat.specularPower = 48
 
   // -------------------------------------------------------------------
   // Sol — CreateGround : plan horizontal, normales vers +Y

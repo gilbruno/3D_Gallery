@@ -76,9 +76,9 @@ export async function setupCamera(
   cursorDisc.setEnabled(false)
 
   const cursorMat = new StandardMaterial('cursor-disc-mat', scene)
-  cursorMat.diffuseColor = new Color3(1, 1, 1)
-  cursorMat.emissiveColor = new Color3(0.9, 0.9, 0.9)
-  cursorMat.alpha = 0.45
+  cursorMat.diffuseColor = new Color3(0.3, 0.3, 0.3)
+  cursorMat.emissiveColor = new Color3(0.3, 0.3, 0.3)
+  cursorMat.alpha = 0.75
   cursorMat.disableLighting = true
   cursorDisc.material = cursorMat
 
