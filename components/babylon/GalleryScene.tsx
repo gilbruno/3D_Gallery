@@ -6,14 +6,13 @@ import BabylonCanvas from './BabylonCanvas'
 import { setupLighting } from './LightingSetup'
 import { buildRoom } from './RoomBuilder'
 import { setupCamera } from './CameraController'
+import type { CameraControls } from './CameraController'
 import { loadArtworks } from './ArtworkLoader'
 import {
   createWallMaterial,
   createFloorMaterial,
   createSkirtingMaterial,
 } from '@/lib/babylon/materials'
-// Les matériaux retournés sont désormais des StandardMaterial (pas PBRMaterial)
-// — typage implicite via inférence, pas besoin d'importer le type explicitement
 import type { ArtworkConfig, ExhibitionConfig } from '@/data/exhibitions/schema'
 
 const ROOM_DIMENSIONS = { width: 10, height: 4, depth: 15 }
@@ -27,6 +26,16 @@ interface GallerySceneProps {
   onArtworkClick?: (artwork: ArtworkConfig) => void
   /** Callback déclenché au survol d'une œuvre — null = fin du survol */
   onArtworkHover?: (artwork: ArtworkConfig | null) => void
+  /**
+   * Appelé quand le mode détail change (true = caméra zoomée sur une œuvre).
+   * Permet à GalleryClient d'afficher/masquer le bouton "Sortir du mode détail".
+   */
+  onDetailModeChange?: (inDetail: boolean) => void
+  /**
+   * Appelé une fois la caméra initialisée, avec les contrôles permettant
+   * d'appeler focusOnArtwork / exitDetailMode depuis React.
+   */
+  onCameraReady?: (controls: CameraControls) => void
 }
 
 export default function GalleryScene({
@@ -34,8 +43,12 @@ export default function GalleryScene({
   exhibition,
   onArtworkClick,
   onArtworkHover,
+  onDetailModeChange,
+  onCameraReady,
 }: GallerySceneProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  /** Référence aux contrôles caméra pour le mode détail */
+  const cameraControlsRef = useRef<CameraControls | null>(null)
 
   const handleSceneReady = useCallback(
     async (scene: Scene, canvas: HTMLCanvasElement) => {
@@ -66,8 +79,12 @@ export default function GalleryScene({
       // Le sol reçoit les ombres mais ne les projette pas (plan horizontal)
       room.floor.receiveShadows = true
 
-      // Étape 7 : caméra first-person
-      await setupCamera(scene, canvas)
+      // Étape 7 : caméra first-person avec contrôles de mode détail
+      const { camera: _camera, controls } = await setupCamera(scene, canvas)
+
+      // Stocke les contrôles et notifie GalleryClient
+      cameraControlsRef.current = controls
+      onCameraReady?.(controls)
 
       // Étape 8 : matériaux des surfaces (galerie ouverte sans plafond)
       const [wallMat, floorMat, skirtingMat] = await Promise.all([
@@ -104,6 +121,15 @@ export default function GalleryScene({
 
       const handleClick = (artwork: ArtworkConfig) => {
         console.log('[GalleryScene] clic œuvre :', artwork.meta.title, artwork)
+
+        // Zoom smooth vers l'œuvre via les contrôles caméra
+        const ctrl = cameraControlsRef.current
+        if (ctrl) {
+          ctrl.focusOnArtwork(artwork)
+          onDetailModeChange?.(true)
+        }
+
+        // Notifie également le parent (GalleryClient) pour d'éventuels side-effects
         onArtworkClick?.(artwork)
       }
 
@@ -117,7 +143,7 @@ export default function GalleryScene({
         `[GalleryScene] ${roomConfig.artworks.length} œuvre(s) chargée(s) pour "${config.title}"`
       )
     },
-    [slug, exhibition, onArtworkClick, onArtworkHover]
+    [slug, exhibition, onArtworkClick, onArtworkHover, onDetailModeChange, onCameraReady]
   )
 
   const handleRender = useCallback((_scene: Scene) => {
