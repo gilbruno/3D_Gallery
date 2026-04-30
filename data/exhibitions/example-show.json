@@ -10,7 +10,7 @@
       "artworks": [
         {
           "id": "artwork-back-01",
-          "imageUrl": "https://pub-d7df68395d644bd3bc80d24168d6d8be.r2.dev/artists/Adam%20Akner/landing/entre-deux.webp",
+          "imageUrl": "https://pub-d7df68395d644bd3bc80d24168d6d8be.r2.dev/artists/Adam%20Akner/landing/entre-deux.webp?v=1",
           "position": [-3, 1.8, -7.3],
           "rotation": [0, 0, 0],
           "dimensions": { "widthCm": 80, "heightCm": 65 },
