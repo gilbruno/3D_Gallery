@@ -69,7 +69,7 @@ async function buildWindowsOnWall(
 
 export async function buildWindows(scene: Scene): Promise<WindowsResult> {
   const { MeshBuilder, StandardMaterial, Color3, Vector3,
-          DirectionalLight, ShadowGenerator } = await import('@babylonjs/core')
+          DirectionalLight, PointLight, ShadowGenerator } = await import('@babylonjs/core')
 
   const frameMat = new StandardMaterial('win-frame', scene)
   frameMat.diffuseColor = new Color3(0.97, 0.97, 0.97)
@@ -88,13 +88,31 @@ export async function buildWindows(scene: Scene): Promise<WindowsResult> {
   // Mur droit (X=+5) — symétrique
   await buildWindowsOnWall(scene, +5.0, +1, frameMat, glassMat, MeshBuilder, Vector3)
 
-  // Une seule lumière directionnelle légèrement rasante pour les ombres douces —
-  // intensité basse pour ne pas sur-éclairer les murs latéraux
-  const winLight = new DirectionalLight('window-light', new Vector3(0.3, -1, 0.1), scene)
+  // Lumière directionnelle douce et zénithale légèrement biaisée — sert pour les ombres
+  const winLight = new DirectionalLight('window-light', new Vector3(0.2, -1, 0.1), scene)
   winLight.position = new Vector3(0, 6, 0)
   winLight.intensity = 0.25
   winLight.diffuse = new Color3(0.92, 0.95, 1.0)
   winLight.specular = new Color3(0.0, 0.0, 0.0)
+
+  // PointLights derrière chaque vitre — projettent la lumière des fenêtres vers
+  // l'intérieur de la salle ET vers le plafond, créant des nuances/dégradés
+  // naturels sur le faux plafond (zones plus claires en face des fenêtres).
+  for (const zc of WIN_Z_POSITIONS) {
+    // Source côté gauche (X=-5)
+    const pL = new PointLight(`win-pt-L-${zc}`, new Vector3(-4.7, WIN_Y, zc), scene)
+    pL.diffuse = new Color3(0.92, 0.95, 1.0)
+    pL.specular = new Color3(0.0, 0.0, 0.0)
+    pL.intensity = 0.55
+    pL.range = 9   // portée limitée pour éviter de sur-éclairer le mur opposé
+
+    // Source côté droit (X=+5)
+    const pR = new PointLight(`win-pt-R-${zc}`, new Vector3(4.7, WIN_Y, zc), scene)
+    pR.diffuse = new Color3(0.92, 0.95, 1.0)
+    pR.specular = new Color3(0.0, 0.0, 0.0)
+    pR.intensity = 0.55
+    pR.range = 9
+  }
 
   const shadowGenerator = new ShadowGenerator(1024, winLight)
   shadowGenerator.useBlurExponentialShadowMap = true

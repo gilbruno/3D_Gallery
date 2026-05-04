@@ -154,15 +154,32 @@ export async function loadArtworks(
   const results: LoadedArtwork[] = []
 
   for (const artwork of artworks) {
-    const meshHeight = artwork.dimensions.heightCm / PIXELS_PER_METER
-    const meshWidth = artwork.dimensions.widthCm / PIXELS_PER_METER
+    // Dimensions JSON utilisées comme bornes max — on conserve la plus grande
+    // (largeur ou hauteur) puis on dérive l'autre du ratio natif de l'image
+    // pour éviter tout étirement non naturel.
+    const maxW = artwork.dimensions.widthCm / PIXELS_PER_METER
+    const maxH = artwork.dimensions.heightCm / PIXELS_PER_METER
 
     // ---------------------------------------------------------------
-    // Étape 9a : mesh plan image
+    // Étape 9a : matériau (chargement image AVANT création du plan
+    // pour pouvoir détecter le ratio natif et adapter la taille).
     // ---------------------------------------------------------------
+    const mat = new StandardMaterial(`mat-${artwork.id}`, scene)
+    const tex = new Texture(artwork.imageUrl, scene)
+    tex.hasAlpha = false
+    mat.emissiveTexture = tex
+    mat.disableLighting = true
+    mat.backFaceCulling = true
+
+    // Création initiale du plan avec dimensions JSON — sera redimensionné
+    // dynamiquement quand la texture sera chargée et que l'on connaîtra
+    // le ratio natif de l'image.
+    let meshWidth = maxW
+    let meshHeight = maxH
+
     const plane = MeshBuilder.CreatePlane(
       `artwork-${artwork.id}`,
-      { width: meshWidth, height: meshHeight, sideOrientation: BabMesh.DOUBLESIDE },
+      { width: meshWidth, height: meshHeight, sideOrientation: BabMesh.FRONTSIDE },
       scene
     )
     plane.position = new Vector3(
@@ -172,19 +189,35 @@ export async function loadArtworks(
     )
     plane.rotation = new Vector3(
       artwork.rotation[0],
-      artwork.rotation[1],
+      artwork.rotation[1] + Math.PI,
       artwork.rotation[2]
     )
-
-    // Matériau image — emissiveColor blanc + disableLighting pour affichage
-    // fidèle des couleurs sans dépendance à l'IBL
-    const mat = new StandardMaterial(`mat-${artwork.id}`, scene)
-    const tex = new Texture(artwork.imageUrl, scene)
-    tex.hasAlpha = false
-    mat.emissiveTexture = tex
-    mat.disableLighting = true
-    mat.backFaceCulling = false
     plane.material = mat
+
+    // Une fois la texture chargée : ajuster les scaling X/Y du plan pour
+    // respecter le ratio natif de l'image, en s'inscrivant dans les bornes
+    // maxW × maxH (l'image n'est jamais étirée, jamais agrandie au-delà
+    // de ce que le JSON spécifie).
+    tex.onLoadObservable.addOnce(() => {
+      const size = tex.getSize()
+      if (!size || !size.width || !size.height) return
+      const imgRatio = size.width / size.height   // ratio natif de l'image
+      const boxRatio = maxW / maxH                // ratio max autorisé
+
+      let newW: number
+      let newH: number
+      if (imgRatio >= boxRatio) {
+        // image plus large que la boîte → on borne par la largeur
+        newW = maxW
+        newH = maxW / imgRatio
+      } else {
+        // image plus haute que la boîte → on borne par la hauteur
+        newH = maxH
+        newW = maxH * imgRatio
+      }
+      plane.scaling.x = newW / meshWidth
+      plane.scaling.y = newH / meshHeight
+    })
 
     // ---------------------------------------------------------------
     // Étape 9b : cadre procédural

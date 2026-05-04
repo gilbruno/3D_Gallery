@@ -9,6 +9,7 @@ import { setupCamera } from './CameraController'
 import type { CameraControls } from './CameraController'
 import { loadArtworks } from './ArtworkLoader'
 import { buildWindows } from './WindowsBuilder'
+import { buildCeiling } from './CeilingBuilder'
 import { buildFurniture } from './GalleryFurniture'
 import {
   createWallMaterial,
@@ -63,6 +64,9 @@ export default function GalleryScene({
 
       // Étape 5 : construction de la salle procédurale
       const room = await buildRoom(scene, ROOM_DIMENSIONS)
+
+      // Faux plafond avec caisson et corniche périphérique
+      await buildCeiling(scene)
 
       // Fenêtres hautes avec lumière naturelle sur le mur gauche
       const { shadowGenerator: winShadows } = await buildWindows(scene)
