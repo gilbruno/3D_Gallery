@@ -8,6 +8,8 @@ import { buildRoom } from './RoomBuilder'
 import { setupCamera } from './CameraController'
 import type { CameraControls } from './CameraController'
 import { loadArtworks } from './ArtworkLoader'
+import { buildWindows } from './WindowsBuilder'
+import { buildFurniture } from './GalleryFurniture'
 import {
   createWallMaterial,
   createFloorMaterial,
@@ -62,21 +64,26 @@ export default function GalleryScene({
       // Étape 5 : construction de la salle procédurale
       const room = await buildRoom(scene, ROOM_DIMENSIONS)
 
-      // Murs épais comme shadow casters — leur volume (CreateBox avec depth=0.3)
-      // projette des ombres portées réalistes sur le sol (arête supérieure visible).
-      // Sol comme receiver uniquement — c'est lui qui affiche les ombres des murs.
+      // Fenêtres hautes avec lumière naturelle sur le mur gauche
+      const { shadowGenerator: winShadows } = await buildWindows(scene)
+
+      room.floor.receiveShadows = true
+      for (const mesh of [room.walls.back, room.walls.front, ...room.wallLeftSegments, ...room.wallRightSegments, ...room.skirtings]) {
+        winShadows.addShadowCaster(mesh)
+      }
+
+      // Murs épais comme shadow casters
       const wallMeshes = [
         room.walls.back,
         room.walls.front,
-        room.walls.left,
-        room.walls.right,
+        ...room.wallLeftSegments,
+        ...room.wallRightSegments,
         ...room.skirtings,
       ]
       for (const mesh of wallMeshes) {
         shadowGenerator.addShadowCaster(mesh)
         mesh.receiveShadows = true
       }
-      // Le sol reçoit les ombres mais ne les projette pas (plan horizontal)
       room.floor.receiveShadows = true
 
       // Étape 7 : caméra first-person avec contrôles de mode détail
@@ -96,11 +103,9 @@ export default function GalleryScene({
       room.floor.material = floorMat
       room.walls.back.material = wallMat
       room.walls.front.material = wallMat
-      room.walls.left.material = wallMat
-      room.walls.right.material = wallMat
-      for (const skirting of room.skirtings) {
-        skirting.material = skirtingMat
-      }
+      for (const seg of room.wallLeftSegments) seg.material = wallMat
+      for (const seg of room.wallRightSegments) seg.material = wallMat
+      for (const skirting of room.skirtings) skirting.material = skirtingMat
 
       // ---------------------------------------------------------------
       // Phase 3 : chargement des œuvres
@@ -136,6 +141,8 @@ export default function GalleryScene({
       const handleHover = (artwork: ArtworkConfig | null) => {
         onArtworkHover?.(artwork)
       }
+
+      await buildFurniture(scene)
 
       await loadArtworks(roomConfig.artworks, scene, handleClick, handleHover)
 

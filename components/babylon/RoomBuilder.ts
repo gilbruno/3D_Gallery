@@ -11,9 +11,11 @@ export interface RoomMeshes {
   walls: {
     back: Mesh
     front: Mesh
-    left: Mesh
+    left: Mesh       // bandeau bas (représentant) — utiliser wallLeftSegments pour tout
     right: Mesh
   }
+  wallLeftSegments: Mesh[]   // tous les segments du mur gauche percé
+  wallRightSegments: Mesh[]  // tous les segments du mur droit percé
   skirtings: Mesh[]
 }
 
@@ -98,28 +100,71 @@ export async function buildRoom(
   wallFront.checkCollisions = true
   wallFront.isPickable = false
 
-  // Mur gauche — à X=-width/2
-  // depth du box = depth de la salle pour couvrir toute la longueur
-  const wallLeft = MeshBuilder.CreateBox(
-    'wall-left',
-    { width: WALL_THICKNESS, height, depth },
-    scene
-  )
-  wallLeft.position = new Vector3(-width / 2, height / 2, 0)
-  wallLeft.material = tempMat
-  wallLeft.checkCollisions = true
-  wallLeft.isPickable = false
+  // Mur gauche — découpé pour laisser les ouvertures des 3 fenêtres
+  // Fenêtres : WIN_H=3.2m (Y 0.3→3.5), WIN_W=0.9m, centres Z=-2.8, 0, +2.8
+  // Le mur est reconstruit en 3 bandeaux horizontaux + 4 poteaux verticaux
+  const WIN_H = 3.2, WIN_W = 0.9, WIN_Y = 1.9
+  const winYBot = WIN_Y - WIN_H / 2   // 0.3
+  const winYTop = WIN_Y + WIN_H / 2   // 3.5
+  // Positions Z synchronisées avec WindowsBuilder — entre les œuvres gauche (Z=-4.5, 0, +4.5)
+  const zCenters = [-6.2, -2.25, 2.25]
+  const halfW = WIN_W / 2
 
-  // Mur droit — à X=+width/2
-  const wallRight = MeshBuilder.CreateBox(
-    'wall-right',
-    { width: WALL_THICKNESS, height, depth },
-    scene
-  )
-  wallRight.position = new Vector3(width / 2, height / 2, 0)
-  wallRight.material = tempMat
-  wallRight.checkCollisions = true
-  wallRight.isPickable = false
+  // Bandeau bas (sous les fenêtres) — pleine longueur
+  const leftBandBot = MeshBuilder.CreateBox('wall-left-bot', { width: WALL_THICKNESS, height: winYBot, depth }, scene)
+  leftBandBot.position = new Vector3(-width / 2, winYBot / 2, 0)
+  leftBandBot.material = tempMat; leftBandBot.checkCollisions = true; leftBandBot.isPickable = false
+
+  // Bandeau haut (dessus des fenêtres) — pleine longueur
+  const topH = height - winYTop
+  const leftBandTop = MeshBuilder.CreateBox('wall-left-top', { width: WALL_THICKNESS, height: topH, depth }, scene)
+  leftBandTop.position = new Vector3(-width / 2, winYTop + topH / 2, 0)
+  leftBandTop.material = tempMat; leftBandTop.checkCollisions = true; leftBandTop.isPickable = false
+
+  // Poteaux entre (et autour) des fenêtres — hauteur de la zone fenêtrée
+  const postH = WIN_H
+  const postY = WIN_Y
+  // Bords Z des ouvertures
+  const openings = zCenters.map(z => [z - halfW, z + halfW] as [number, number])
+  // Intervalles entre ouvertures : de -depth/2 aux bords gauches/droits
+  const [o0, o1, o2] = openings as [[number,number],[number,number],[number,number]]
+  const postZRanges: Array<[number, number]> = [
+    [-depth / 2, o0[0]],
+    [o0[1], o1[0]],
+    [o1[1], o2[0]],
+    [o2[1], depth / 2],
+  ]
+  const wallLeftMeshes = [leftBandBot, leftBandTop]
+  for (const [zA, zB] of postZRanges) {
+    const pDepth = zB - zA
+    if (pDepth <= 0) continue
+    const post = MeshBuilder.CreateBox(`wall-left-post-${zA}`, { width: WALL_THICKNESS, height: postH, depth: pDepth }, scene)
+    post.position = new Vector3(-width / 2, postY, (zA + zB) / 2)
+    post.material = tempMat; post.checkCollisions = true; post.isPickable = false
+    wallLeftMeshes.push(post)
+  }
+  // Représentant principal du mur gauche (bandeau bas) pour l'API existante
+  const wallLeft = leftBandBot
+
+  // Mur droit — percé symétriquement avec les mêmes ouvertures que le mur gauche
+  const rightBandBot = MeshBuilder.CreateBox('wall-right-bot', { width: WALL_THICKNESS, height: winYBot, depth }, scene)
+  rightBandBot.position = new Vector3(width / 2, winYBot / 2, 0)
+  rightBandBot.material = tempMat; rightBandBot.checkCollisions = true; rightBandBot.isPickable = false
+
+  const rightBandTop = MeshBuilder.CreateBox('wall-right-top', { width: WALL_THICKNESS, height: topH, depth }, scene)
+  rightBandTop.position = new Vector3(width / 2, winYTop + topH / 2, 0)
+  rightBandTop.material = tempMat; rightBandTop.checkCollisions = true; rightBandTop.isPickable = false
+
+  const wallRightMeshes = [rightBandBot, rightBandTop]
+  for (const [zA, zB] of postZRanges) {
+    const pDepth = zB - zA
+    if (pDepth <= 0) continue
+    const post = MeshBuilder.CreateBox(`wall-right-post-${zA}`, { width: WALL_THICKNESS, height: postH, depth: pDepth }, scene)
+    post.position = new Vector3(width / 2, postY, (zA + zB) / 2)
+    post.material = tempMat; post.checkCollisions = true; post.isPickable = false
+    wallRightMeshes.push(post)
+  }
+  const wallRight = rightBandBot
 
   // -------------------------------------------------------------------
   // Plinthes — lignes sombres à la base des 4 murs
@@ -183,6 +228,8 @@ export async function buildRoom(
       left: wallLeft,
       right: wallRight,
     },
+    wallLeftSegments: wallLeftMeshes,
+    wallRightSegments: wallRightMeshes,
     skirtings: [skirtBack, skirtFront, skirtLeft, skirtRight],
   }
 }
